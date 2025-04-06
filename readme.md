@@ -107,7 +107,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Disclaimer
 
-> ⚠️ This application is for **informational purposes only**.  
-> It is **not** a replacement for professional medical care.  
-> In an emergency, always call your local emergency services.
+> ⚠️ This application is for **informational purposes only**.
 

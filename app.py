@@ -1,5 +1,5 @@
 import streamlit as st
-from openai import OpenAI
+import google.generativeai as genai
 import json
 import os
 from dotenv import load_dotenv
@@ -25,11 +25,14 @@ st.markdown("""
 load_dotenv()
 
 # Get API key from environment variable
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+GEMINI_API_KEY =st.secrets["GEMINI_API_KEY"] 
 
-if not OPENAI_API_KEY:
-    st.error("⚠️ OpenAI API key not found. Please set up your .env file with OPENAI_API_KEY=your-key-here")
+if not GEMINI_API_KEY:
+    st.error("⚠️ Gemini API key not found. Please set up your secrets.toml file with GEMINI_API_KEY=your-key-here")
     st.stop()
+
+# Configure the Gemini API
+genai.configure(api_key=GEMINI_API_KEY)
 
 # Create the main UI with simple styling
 st.title("🩹 First Aid Advisor")
@@ -69,21 +72,26 @@ def get_guideline_response(text):
             return "\n\n".join(steps)
     return "❗ Sorry, I couldn't find specific first aid steps for this situation. Please seek help."
 
-# Get GPT response (OpenAI v1.0+)
-def get_gpt_response(text):
+# Get Gemini response
+def get_gemini_response(text):
     try:
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a certified first aid assistant providing accurate and concise first aid advice."},
-                {"role": "user", "content": f"Someone says: '{text}'. What are the step-by-step first aid instructions?"}
-            ],
-            max_tokens=300
-        )
-        return response.choices[0].message.content.strip()
+        # Set up the model
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        
+        # Create the prompt
+        prompt = f"""You are a certified first aid assistant providing accurate and concise first aid advice.
+        
+Someone says: '{text}'. What are the step-by-step first aid instructions?
+
+Please provide clear, numbered steps that are easy to follow in an emergency situation."""
+        
+        # Generate the response
+        response = model.generate_content(prompt)
+        
+        # Return the text from the response
+        return response.text.strip()
     except Exception as e:
-        return f"GPT Error: {e}"
+        return f"Gemini Error: {e}"
 
 # Handle form submission
 if submit_button:
@@ -97,12 +105,12 @@ if submit_button:
             who_steps = get_guideline_response(user_input)
             st.success(who_steps)
 
-        # GPT-based response
+        # Gemini-based response
         st.markdown("---")
-        st.subheader("🤖 GPT Advice")
-        with st.spinner("Contacting GPT..."):
-            gpt_steps = get_gpt_response(user_input)
-            st.info(gpt_steps)
+        st.subheader("🤖 Gemini Advice")
+        with st.spinner("Contacting Gemini..."):
+            gemini_steps = get_gemini_response(user_input)
+            st.info(gemini_steps)
 
 # Disclaimer
 st.markdown("---")
